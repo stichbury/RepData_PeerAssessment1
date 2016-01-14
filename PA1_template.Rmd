@@ -6,20 +6,113 @@ output:
 ---
 
 
+
 ## Loading and preprocessing the data
-
-
+```{R}
+##Load the data
+data<-read.csv("activity.csv")
+##Date transformation
+data$date <- as.Date(data$date)
+```
 
 ## What is mean total number of steps taken per day?
+Calculate the total number of steps taken per day
+```{r}
+dailysteps<-aggregate(steps~date,data,sum)
+dailysteps
 
+#Show a histogram of the total number of steps taken each day
+hist(dailysteps$steps, breaks=20, main="Total steps taken per day", xlab="Number of steps")
 
+meansteps<-mean(dailysteps$steps)
+meansteps<-format(meansteps, scientific=FALSE) ##Display this nicely rather than as an exponent
+medsteps<-median(dailysteps$steps)
+
+```
+
+"Calculate and report the mean and median of the total number of steps taken per day"  
+Answer:  
+Mean number of steps taken per day (excluding NA values): `r meansteps`  
+Median number of steps taken per day (excluding NA values): `r medsteps`
 
 ## What is the average daily activity pattern?
 
+Make a time series plot (i.e. 𝚝𝚢𝚙𝚎 = "𝚕") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
+```{R}
+stepsPerInterval<-aggregate(steps~interval, data, mean)
+maxsteps<-max(stepsPerInterval$steps)
+interval <- stepsPerInterval$interval[stepsPerInterval$steps == maxsteps] 
+
+plot(stepsPerInterval$interval, stepsPerInterval$steps, xlab="Interval", ylab="Average steps", type="l")
+
+```
+
+"Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?"  
+
+Answer: `r interval`
 
 ## Imputing missing values
 
+Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with 𝙽𝙰s)
+```{R}
+missingvals<-sum(is.na(data$steps))
+```
+Number of NA values: `r missingvals`
 
+
+For the missing values, use the mean calculated earlier for that particular 5-minute interval.
+Creating a new dataset that is equal to the original dataset but with the missing data filled in...
+```{R}
+completeData <- data ## Copy data
+
+##Run through data and replace any NAs by average for that interval - use modulus operator to determine interval needed
+intervalCount<-dim(stepsPerInterval) ## Number of intervals per day
+for(i in seq_along(completeData$steps))
+  {
+    if (is.na(completeData$steps[i]))
+      {
+        index<-(i %% intervalCount[1])
+        if (index==0)
+          index<-intervalCount[1] ##No zero indexing in R
+          
+        completeData$steps[i]<-stepsPerInterval$steps[index]
+      }
+  }
+
+```
+
+Make a histogram of the total number of steps taken each day
+
+```{r}
+completedailysteps<-aggregate(steps~date,completeData,sum)
+completedailysteps
+
+hist(completedailysteps$steps, breaks=20, main="Total steps taken per day", xlab="Number of steps")
+
+```
+
+Calculate and report the mean and median total number of steps taken per day. 
+```{r}
+
+completemean<-mean(completedailysteps$steps)
+
+completemed<-median(completedailysteps$steps)
+
+```
+
+Answer:  
+Mean number of steps taken per day (imputing NA values): `r completemean`  
+Median number of steps taken per day (imputing NA values): `r completemed`
+
+Do these values differ from the estimates from the first part of the assignment? 
+
+Answer: Not significantly
+
+
+What is the impact of imputing missing data on the estimates of the total daily number of steps?
+Answer: Step count is averaged for those with all data missing, otherwise not changed significantly
 
 ## Are there differences in activity patterns between weekdays and weekends?
+I've run out of time to complete this - sorry. 
+Thanks for reading!
